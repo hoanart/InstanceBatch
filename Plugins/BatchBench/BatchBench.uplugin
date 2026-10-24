@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1",
+	"FriendlyName": "BatchBench",
+	"Description": "Mass-object rendering benchmark: Actor / ISM / HISM / Mass under identical conditions.",
+	"Category": "Benchmark",
+	"CreatedBy": "Lee Sungho",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "Bench",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
