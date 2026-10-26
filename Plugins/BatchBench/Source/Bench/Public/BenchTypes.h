@@ -10,9 +10,9 @@ UENUM()
 enum class EBenchMode : uint8
 {
 	Actor          = 0,
-	ISM_PerInstance = 1,	// 인스턴스마다 UpdateInstanceTransform + 더티 마킹
-	ISM_Batched    = 2,	// 전부 갱신 후 MarkRenderStateDirty 1회
-	ISM_ShaderMove = 3,	// PerInstanceCustomData + 머티리얼에서 이동 계산
+	ISM_DirtyEach  = 1,	// 트랜스폼 갱신 + 더티 플래그를 인스턴스마다
+	ISM_DirtyOnce  = 2,	// 트랜스폼 갱신 + 더티 플래그는 마지막 1회만
+	ISM_ShaderMove = 3,	// CPU 갱신 없음. PerInstanceCustomData(위상) + 머티리얼 WPO로 이동
 	HISM           = 4,
 	Mass           = 5,
 

@@ -19,7 +19,7 @@ class BENCH_API IBatchSpawner
 	GENERATED_BODY()
 
 public:
-	/** 기존 객체를 지우고 Count개를 새로 만든다. */
+	/** 기존 객체를 지우고 Count개를 새로 만든다. 배치는 Bench::Layout을 따른다(모든 방식 동일). */
 	virtual void Spawn(int32 Count) = 0;
 
 	/** true면 매 프레임 이동, false면 정지. */
@@ -30,4 +30,10 @@ public:
 
 	/** 현재 살아 있는 객체 수 (측정 기록 검증용). */
 	virtual int32 GetCount() const = 0;
+
+	/**
+	 * 서브시스템이 매 프레임 호출한다. 이동을 중앙에서 처리하는 방식(ISM 등)은 여기서 갱신.
+	 * Actor 방식은 각 액터가 자기 Tick으로 움직이므로 비워둔다 (실제 Actor 사용 패턴 그대로 비교).
+	 */
+	virtual void TickSpawner(float DeltaTime, double TimeSeconds) {}
 };

@@ -10,8 +10,8 @@ namespace Bench
 		switch (Mode)
 		{
 		case EBenchMode::Actor:           return TEXT("Actor");
-		case EBenchMode::ISM_PerInstance: return TEXT("ISM-PerInstance");
-		case EBenchMode::ISM_Batched:     return TEXT("ISM-Batched");
+		case EBenchMode::ISM_DirtyEach:   return TEXT("ISM-DirtyEach");
+		case EBenchMode::ISM_DirtyOnce:   return TEXT("ISM-DirtyOnce");
 		case EBenchMode::ISM_ShaderMove:  return TEXT("ISM-ShaderMove");
 		case EBenchMode::HISM:            return TEXT("HISM");
 		case EBenchMode::Mass:            return TEXT("Mass");

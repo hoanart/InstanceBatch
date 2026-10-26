@@ -12,5 +12,11 @@ public class Bench : ModuleRules
 			"CoreUObject",
 			"Engine",
 		});
+
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"RenderCore",	// GGameThreadTime / GRenderThreadTime / GRHIThreadTime
+			"RHI",			// RHIGetGPUFrameCycles, GRHIAdapterName
+		});
 	}
 }
