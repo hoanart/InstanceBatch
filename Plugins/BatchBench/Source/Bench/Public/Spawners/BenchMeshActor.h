@@ -16,7 +16,7 @@ class BENCH_API ABenchMeshActor : public AActor
 public:
 	ABenchMeshActor();
 
-	void Setup(UStaticMesh* Mesh, int32 InIndex, const FVector& InBaseLocation);
+	void Setup(UStaticMesh* Mesh, int32 InIndex, int32 InCount);
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -25,5 +25,6 @@ private:
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	int32 Index = 0;
-	FVector BaseLocation = FVector::ZeroVector;
+	FVector Dir = FVector::ForwardVector;
+	double R0 = 0.0;
 };

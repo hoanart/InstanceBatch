@@ -2,6 +2,7 @@
 #include "BenchLayout.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 ABenchMeshActor::ABenchMeshActor()
 {
@@ -16,17 +17,19 @@ ABenchMeshActor::ABenchMeshActor()
 	RootComponent = Mesh;
 }
 
-void ABenchMeshActor::Setup(UStaticMesh* InMesh, int32 InIndex, const FVector& InBaseLocation)
+void ABenchMeshActor::Setup(UStaticMesh* InMesh, int32 InIndex, int32 InCount)
 {
 	Index = InIndex;
-	BaseLocation = InBaseLocation;
+	Dir = Bench::Layout::GetDirection(InIndex);
+	R0 = Bench::Layout::GetInitialRadius(InIndex, InCount);
 	Mesh->SetStaticMesh(InMesh);
-	Mesh->SetWorldScale3D(FVector(Bench::Layout::MeshScale));
+	Mesh->SetWorldScale3D(Bench::Layout::MeshScale);
 }
 
 void ABenchMeshActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	TRACE_CPUPROFILER_EVENT_SCOPE(Bench_Actor_Tick);
 	const double T = GetWorld()->GetTimeSeconds();
-	SetActorLocation(BaseLocation + Bench::Layout::GetMoveOffset(Index, T), false, nullptr, ETeleportType::TeleportPhysics);
+	SetActorLocation(Bench::Layout::GetLocationCached(Dir, R0, T), false, nullptr, ETeleportType::TeleportPhysics);
 }

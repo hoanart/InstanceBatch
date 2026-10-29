@@ -56,7 +56,12 @@ private:
 	UPROPERTY()
 	TObjectPtr<UInstancedStaticMeshComponent> ISM;
 
-	TArray<FVector> BaseLocations;
+	/** 스폰 시 고정되는 인스턴스별 회전. 위치만 매 프레임 바뀐다. */
+	TArray<FQuat> Rotations;
+	/** 스폰 시 계산해 두는 방향·초기 반경. 매 프레임 루프에서 다시 계산하지 않는다. */
+	TArray<FVector> Dirs;
+	TArray<double> R0s;
+	int32 SpawnedCount = 0;
 	EISMUpdate Update = EISMUpdate::DirtyEach;
 
 	/** ShaderMove 전용: 이동 시 덮어쓸 머티리얼 (WPO로 이동). 정지 시엔 메시 기본 머티리얼. */

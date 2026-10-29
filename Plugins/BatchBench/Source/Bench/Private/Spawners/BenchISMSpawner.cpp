@@ -5,6 +5,7 @@
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInterface.h"
 #include "Engine/World.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 namespace
 {
@@ -77,30 +78,39 @@ void UBenchISMSpawner::Spawn(int32 Count)
 
 	const double StartTime = FPlatformTime::Seconds();
 
-	BaseLocations.SetNumUninitialized(Count);
+	SpawnedCount = Count;
+	Rotations.SetNumUninitialized(Count);
+	Dirs.SetNumUninitialized(Count);
+	R0s.SetNumUninitialized(Count);
 	TArray<FTransform> Transforms;
 	Transforms.SetNumUninitialized(Count);
-	const FVector Scale(Bench::Layout::MeshScale);
 	for (int32 i = 0; i < Count; ++i)
 	{
-		BaseLocations[i] = Bench::Layout::GetBaseLocation(i, Count);
-		Transforms[i] = FTransform(FQuat::Identity, BaseLocations[i], Scale);
+		Dirs[i] = Bench::Layout::GetDirection(i);
+		R0s[i] = Bench::Layout::GetInitialRadius(i, Count);
+		Rotations[i] = Dirs[i].Rotation().Quaternion();
+		Transforms[i] = FTransform(Rotations[i], Bench::Layout::GetLocationCached(Dirs[i], R0s[i], 0.0), Bench::Layout::MeshScale);
 	}
 
+	// ShaderMove: CustomData 0..2 = 비행 방향, 3 = 초기 반경. 머티리얼이 같은 식으로 위치를 계산한다.
 	const bool bShader = (Update == EISMUpdate::ShaderMove);
-	ISM->SetNumCustomDataFloats(bShader ? 1 : 0);
+	ISM->SetNumCustomDataFloats(bShader ? 4 : 0);
 
 	ISM->PreAllocateInstancesMemory(Count);
 	ISM->AddInstances(Transforms, /*bShouldReturnIndices*/ false, /*bWorldSpace*/ true, /*bUpdateNavigation*/ false);
 
 	if (bShader)
 	{
-		// 인스턴스별 위상만 1회 기록. CPU가 매 프레임 할 일은 이것으로 끝.
-		// 위상은 2π로 감아 float 정밀도 손실을 막는다 (5만 x 0.37 = 18500 rad 그대로 넣으면 sin 정밀도가 떨어짐).
+		// 인스턴스별 방향·초기 반경을 1회 기록. CPU가 매 프레임 할 일은 이것으로 끝.
 		for (int32 i = 0; i < Count; ++i)
 		{
-			const float Phase = static_cast<float>(FMath::Fmod(Bench::Layout::MovePhaseStep * i, UE_TWO_PI));
-			ISM->SetCustomDataValue(i, 0, Phase, /*bMarkRenderStateDirty*/ i == Count - 1);
+			const FVector& Dir = Dirs[i];
+			const float R0 = static_cast<float>(R0s[i]);
+			const bool bLast = (i == Count - 1);
+			ISM->SetCustomDataValue(i, 0, static_cast<float>(Dir.X), false);
+			ISM->SetCustomDataValue(i, 1, static_cast<float>(Dir.Y), false);
+			ISM->SetCustomDataValue(i, 2, static_cast<float>(Dir.Z), false);
+			ISM->SetCustomDataValue(i, 3, R0, bLast);
 		}
 	}
 
@@ -114,7 +124,10 @@ void UBenchISMSpawner::Clear()
 	{
 		ISM->ClearInstances();
 	}
-	BaseLocations.Reset();
+	Rotations.Reset();
+	Dirs.Reset();
+	R0s.Reset();
+	SpawnedCount = 0;
 }
 
 int32 UBenchISMSpawner::GetCount() const
@@ -130,11 +143,14 @@ void UBenchISMSpawner::TickSpawner(float DeltaTime, double TimeSeconds)
 		return;
 	}
 
-	const int32 Num = BaseLocations.Num();
-	const FVector Scale(Bench::Layout::MeshScale);
+	// Insights에서 "이동 갱신 비용이 어디서 나오는가"를 보기 위한 스코프.
+	// DirtyEach / DirtyOnce 를 같은 이름으로 두면 비교가 쉽다.
+	TRACE_CPUPROFILER_EVENT_SCOPE(Bench_ISM_UpdateInstances);
+
+	const int32 Num = Rotations.Num();
 	for (int32 i = 0; i < Num; ++i)
 	{
-		const FTransform T(FQuat::Identity, BaseLocations[i] + Bench::Layout::GetMoveOffset(i, TimeSeconds), Scale);
+		const FTransform T(Rotations[i], Bench::Layout::GetLocationCached(Dirs[i], R0s[i], TimeSeconds), Bench::Layout::MeshScale);
 		const bool bMarkDirty = (Update == EISMUpdate::DirtyOnce) ? (i == Num - 1) : true;
 		ISM->UpdateInstanceTransform(i, T, /*bWorldSpace*/ true, bMarkDirty, /*bTeleport*/ true);
 	}

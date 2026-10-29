@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "UnrealClient.h"
+#include "ProfilingDebugging/MiscTrace.h"
 
 namespace
 {
@@ -95,6 +96,7 @@ bool FBenchRecorder::Tick(float DeltaSeconds)
 		{
 			State = EState::Sampling;
 			FramesLeft = SampleFrames;
+			TRACE_BOOKMARK(TEXT("Bench Sample Start: %s x%d moving=%d"), Bench::ModeToString(Info.Mode), Info.Count, Info.bMoving ? 1 : 0);
 		}
 		return false;
 	}
@@ -141,6 +143,8 @@ void FBenchRecorder::Finish()
 	Result.GpuZeroFrames = GpuZero;
 
 	State = EState::Idle;
+
+	TRACE_BOOKMARK(TEXT("Bench Sample End: %s x%d moving=%d"), Bench::ModeToString(Info.Mode), Info.Count, Info.bMoving ? 1 : 0);
 
 	WriteCsvRow();
 
